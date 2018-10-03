@@ -1,6 +1,6 @@
 {
-  "name": "ThonkBot",
-  "version": "2.0.0",
+  "name": "thonkbot",
+  "version": "2.1.0",
   "description": "Hmmmmm... (But bigger this time)",
   "main": "index.js",
   "scripts": {
@@ -18,5 +18,6 @@
   "homepage": "https://github.com/Augumat/ThonkBot#readme",
   "dependencies": {
     "discord.js": "^11.4.2"
-  }
+  },
+  "devDependencies": {}
 }
