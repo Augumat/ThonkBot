@@ -20,7 +20,8 @@ const lounge = bot.channels.find("name", "lounge")
 const testChannel = bot.channels.find("name", "bot-commands")
 // fail messages
 const THONK_EMOTE = `<:thonkBot:493850310217826354>`;
-const AUTH_FAILED = `hmmmm ` + THONK_EMOTE + `\nDo you have the authorization to use that command?`;
+const AUTH_FAILED = `Hmmmmmmmm ` + THONK_EMOTE + `\nDo you have the authorization to use that command?`;
+const ARGS_FAILED = `Hmmmmmmmm ` + THONK_EMOTE + `\nDo you have the right arguments for that command? \nHave you tried passing "help" as your only argument for the function?`;
 const NOT_COMMAND = `Is that a real command? ` + THONK_EMOTE;
 
 // method to check authLevel
@@ -70,26 +71,38 @@ bot.on('message', function(message)
 	// the key prefix for thonkBot is `?`
     if (message.content.substring(0, 1) == config.prefix)
 	{
-		// STUB logs every attempted command in console
-		console.log(message.content);
 		// get permission level of author
 		// STUB TEMP for testing
 		var authPermLevel = 3;
 		// get command name and passed args
         var args = message.content.substring(1).split(' ');
-		console.log(args);
 		// isolates the command
         var cmd = args[0];
 		// trims the command out of args
         args = args.splice(1);
 		
-		console.log(message.author + ' called "' + cmd + '" in' + message.channel + '.');
+		// logs every attempted command in console
+		console.log(message.author.username + message.author + ' called "' + cmd + '" in ' + message.channel + '.');
+		console.log("args: " + args);
+		
+		// detect a command and execute that command
         switch(cmd)
 		{
             // ?ping <recipient> <number of pings> <extra message>
-			// spaces are acceptable in the extra message
 			case 'ping':
-				console.log(message.author + " is limited to " + PING_LIMIT[authPermLevel] + " pings.");
+				// help function for this command
+				if (args[0] === "help")
+				{
+					console.log(message.author.username + message.author + ' requested help for ' + cmd + '.');
+					message.channel.send('Syntax for "' + cmd + '"is `?ping <recipient> <number of pings> <extra message>*`');
+					message.channel.send('*Everything after <extra message> is concatenated and included in the "extra message"');
+					break;
+				}
+				else if (args.length < 2)
+				{
+					message.channel.send(ARGS_FAILED);
+				}
+				console.log(message.author.username + message.author + " is limited to " + PING_LIMIT[authPermLevel] + " pings.");
 				if (authPermLevel >= INITIATED && +args[1] > PING_LIMIT[authPermLevel])
 				{
 					message.channel.send('I think that may be too many messages, ' + message.author + '... ' + THONK_EMOTE);
@@ -133,7 +146,7 @@ bot.on('message', function(message)
 //				}
 //			break;
 			default:
-				localChannel.send(NOT_COMMAND);
+				message.channel.send(NOT_COMMAND);
 			break;
          }
 	}
