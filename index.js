@@ -13,15 +13,21 @@ const DEFAULT = 0;
 const INITIATED = 1;
 const TRUSTED = 2;
 const ADMIN = 3;
+//
+const PING_LIMIT = config.pingLimit;
 // STUB load channels
 const lounge = bot.channels.find("name", "lounge")
 const testChannel = bot.channels.find("name", "bot-commands")
+// fail messages
+const THONK_EMOTE = `<:thonkBot:493850310217826354>`;
+const AUTH_FAILED = `hmmmm ` + THONK_EMOTE + `\nDo you have the authorization to use that command?`;
+const NOT_COMMAND = `Is that a real command? ` + THONK_EMOTE;
 
-// authorization fail message
-const AUTH_FAILED = '`hmmmm` :thonkBot: `It seems you do not have authorization to use that command`';
 // method to check authLevel
-function isAuth(user, levelRequired)
+function getAuth(user, levelRequired)
 {
+	// STUB TEMP
+	return true;
 	switch (levelRequired)
 	{
 		case DEFAULT:
@@ -49,44 +55,85 @@ function isAuth(user, levelRequired)
 	}
 }
 
+// triggers whenever the bot first initializes
 bot.on("ready", () =>
 {
-  // This event will run if the bot starts, and logs in, successfully.
-  console.log(`Bot has started, with ${bot.users.size} users, in ${bot.channels.size} channels of ${bot.guilds.size} guilds.`); 
-  // Example of changing the bot's playing game to something useful. `client.user` is what the
-  // docs refer to as the "ClientUser".
-  bot.user.setActivity(`with its config files`);
+	// a simple console login confirm message
+	console.log(`ThonkBot has started thonking about ${bot.users.size} users, in ${bot.channels.size} channels of ${bot.guilds.size} servers.`); 
+	// changes what the bot is displayed as "playing"
+	bot.user.setActivity(`with its config files`);
 });
 
 // command listener
-//bot.on('message', function(user, userID, channelID, message, evt)
 bot.on('message', function(message)
 {
 	// the key prefix for thonkBot is `?`
     if (message.content.substring(0, 1) == config.prefix)
 	{
-		// STUB logs every recieved command in console
+		// STUB logs every attempted command in console
 		console.log(message.content);
-		// STUB respond with joke for testing
-		message.channel.send("oi")
-			.then(message => console.log("Sent response: " + message.content))
-			.catch(console.error);
+		// get permission level of author
+		// STUB TEMP for testing
+		var authPermLevel = 3;
 		// get command name and passed args
         var args = message.content.substring(1).split(' ');
 		console.log(args);
+		// isolates the command
         var cmd = args[0];
+		// trims the command out of args
         args = args.splice(1);
-		console.log(args);
+		
+		console.log(message.author + ' called "' + cmd + '" in' + message.channel + '.');
         switch(cmd)
 		{
-            // ?ping <recipient> <number of pings>
-            case 'ping':
-				for (i = 0; i < args[1]; i++)
+            // ?ping <recipient> <number of pings> <extra message>
+			// spaces are acceptable in the extra message
+			case 'ping':
+				console.log(message.author + " is limited to " + PING_LIMIT[authPermLevel] + " pings.");
+				if (authPermLevel >= INITIATED && +args[1] > PING_LIMIT[authPermLevel])
 				{
-					message.channel.send(args[0]);
+					message.channel.send('I think that may be too many messages, ' + message.author + '... ' + THONK_EMOTE);
+				}
+				else if (authPermLevel >= INITIATED)
+				{
+					for (i = 3; i < args.length; i++)
+					{
+						args[2] += " " + args[i];
+					}
+					for (i = 0; i < args[1]; i++)
+					{
+						message.channel.send(args[0] + " " + args[2]);
+					}
+				}
+				else
+				{
+					message.channel.send(AUTH_FAILED);
 				}
             break;
+//			case 'pingwall':
+//				if (isAuth(message.author, ADMIN) && args[1] > config.pingLimit[ADMIN])
+//				{
+//					message.channel.send('easy there, ' + message.author);
+//				}
+//				else if (isAuth(message.author, ADMIN))
+//				{
+//					for (i = 0; i < args[1]; i++)
+//					{
+//						message.channel.send(args[0]);
+//						await sleep(500);
+//					}
+//				}
+//				else
+//				{
+//					message.channel.send(AUTH_FAILED);
+//				}
+//				for (i = 0; i < args[1]; i++)
+//				{
+//					message.channel.send(args[0]);
+//				}
+//			break;
 			default:
+				localChannel.send(NOT_COMMAND);
 			break;
          }
 	}
