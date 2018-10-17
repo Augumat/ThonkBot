@@ -13,7 +13,7 @@ const DEFAULT = 0;
 const INITIATED = 1;
 const TRUSTED = 2;
 const ADMIN = 3;
-//
+// loads the ping limits for each authorization level
 const PING_LIMIT = config.pingLimit;
 // STUB load channels
 const lounge = bot.channels.find("name", "lounge")
@@ -56,10 +56,28 @@ function getAuth(user, levelRequired)
 	}
 }
 
+// method to check whether the first input contains the second
+// toCheck is the larger String and waldo is the phrase to find inside toCheck
+function contains(toCheck, waldo)
+{
+	if (toCheck.length < waldo.length)
+	{
+		return false;
+	}
+	for (i = 0; i < toCheck.length - waldo.length; i++)
+	{
+		if (toCheck.substring(i, i + waldo.length) == waldo)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 // triggers whenever the bot first initializes
 bot.on("ready", () =>
 {
-	// a simple console login confirm message
+	// simple console login confirm message
 	console.log(`ThonkBot has started thonking about ${bot.users.size} users, in ${bot.channels.size} channels of ${bot.guilds.size} servers.`); 
 	// changes what the bot is displayed as "playing"
 	bot.user.setActivity(`with its config files`);
@@ -68,6 +86,32 @@ bot.on("ready", () =>
 // command listener
 bot.on('message', function(message)
 {
+	// do passive message detection
+	for (i = 0; i < config.bannableOffenses.length; i++)
+	{
+		if (contains(message.content, config.bannableOffenses[i]))
+		{
+			switch (i)
+			{
+				case 0: // dab banning literal
+					console.log(`Deleted offending message from ${message.author.username}`);
+					message.channel.send(config.bannableOffenseMessage[0]);
+					console.log(message.content);
+					message.delete()
+					break;
+				case 1: // dab banning evasion
+					console.log(`Deleted offending message from ${message.author.username}`);
+					message.channel.send(config.bannableOffenseMessage[0]);
+					console.log(message.content);
+					message.delete()
+					break;
+				default:
+					console.log('Attempted "' + message.content + '"');
+					break;
+			}
+			break;
+		}
+	}
 	// the key prefix for thonkBot is `?`
     if (message.content.substring(0, 1) == config.prefix)
 	{
@@ -82,7 +126,7 @@ bot.on('message', function(message)
         args = args.splice(1);
 		
 		// logs every attempted command in console
-		console.log(message.author.username + message.author + ' called "' + cmd + '" in ' + message.channel + '.');
+		console.log(message.author.username + message.author + ' attempted "' + cmd + '" in ' + message.channel + '.');
 		console.log("args: " + args);
 		
 		// detect a command and execute that command
@@ -91,7 +135,7 @@ bot.on('message', function(message)
             // ?ping <recipient> <number of pings> <extra message>
 			case 'ping':
 				// help function for this command
-				if (args[0] === "help")
+				if (args.length == 1 && args[0] === "help")
 				{
 					console.log(message.author.username + message.author + ' requested help for ' + cmd + '.');
 					message.channel.send('Syntax for "' + cmd + '"is `?ping <recipient> <number of pings> <extra message>*`');
@@ -109,13 +153,27 @@ bot.on('message', function(message)
 				}
 				else if (authPermLevel >= INITIATED)
 				{
-					for (i = 3; i < args.length; i++)
+					if (args.length > 2)
 					{
-						args[2] += " " + args[i];
+						for (i = 3; i < args.length; i++)
+						{
+							args[2] += " " + args[i];
+						}
+						for (i = 0; i < args[1]; i++)
+						{
+							message.channel.send(args[0] + " " + args[2]);
+						}
 					}
-					for (i = 0; i < args[1]; i++)
+					else
 					{
-						message.channel.send(args[0] + " " + args[2]);
+						for (i = 3; i < args.length; i++)
+						{
+							args[2] += " " + args[i];
+						}
+						for (i = 0; i < args[1]; i++)
+						{
+							message.channel.send(args[0]);
+						}
 					}
 				}
 				else
@@ -145,6 +203,9 @@ bot.on('message', function(message)
 //					message.channel.send(args[0]);
 //				}
 //			break;
+			case 'big':
+				// STUB
+			break;
 			default:
 				message.channel.send(NOT_COMMAND);
 			break;
@@ -152,10 +213,5 @@ bot.on('message', function(message)
 	}
 });
 
+// login with the token specified in config.json
 bot.login(config.token);
-
-
-
-
-
-
