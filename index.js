@@ -84,25 +84,25 @@ function contains(toCheck, waldo)
 
 
 
-// function to generate a board of the specified size and return italics
+// function to generate a board of the specified size and return it
 function generateBoard(sideLength)
 {
-	// creates a board of the size
+	// creates a board of the size specified
 	var newBoard = new Array(sideLength);
-	newBoard.forEach(function(item, index, array)
+	for (i = 0; i < newBoard.length; i++)
 	{
-		newBoard[index] = new Array(sideLength);
-	});
-	
+		newBoard[i] = new Array(sideLength);
+		console.log(newBoard[i]);
+	}
 	// Initializes the values at every index of the board to 0
-	newBoard.forEach(function(currentOuter, index, array)
+	for (x = 0; x < newBoard.length; x++)
 	{
-		currentOuter.forEach(function(currentInner, index, array)
+		for (y = 0; y < newBoard[x].length; y++)
 		{
-			currentInner = 0;
-		});
-	});
-	
+			newBoard[x][y] = 0;
+		}
+	}
+	console.log("Generate;\n" + newBoard);
 	// Returns the newly created board of zeros
 	return newBoard;
 }
@@ -111,49 +111,49 @@ function generateBoard(sideLength)
 function seedBoard(board, seedPercentage)
 {
 	// Iterates through board and sets random values to zero according to the seed percentage
-	board.forEach(function(currentOuter, index1, array1)
+	for (x = 0; x < board.length; x++)
 	{
-		currentOuter.forEach(function(currentInner, index2, array2)
+		for (y = 0; y < board[x].length; y++)
 		{
 			if (Math.random() < seedPercentage)
 			{
-				currentInner = 9;
+				board[x][y] = 9;
 			}
-		});
-	});
-	
+		}
+	}
+	console.log("Seed;\n" + board);
 	return board;
 }
 
 // function to populate a board
-function populateBoard(board, sideLength)
+function populateBoard(board)
 {
-	board.forEach(function(currentOuter, outerIndex, array1)
+	for (x = 0; x < board.length; x++)
 	{
-		currentOuter.forEach(function(currentInner, innerIndex, array2)
+		for (y = 0; y < board[x].length; y++)
 		{
 			// Only count if the current tile is not a bomb
-			if (currentInner != 9)
+			if (board[x][y] != 9)
 			{
 				// Gets a list of the surrounding values
-				var adj = getSurrounding(board, outerIndex, innerIndex, sideLength);
+				var adj = getSurrounding(board, x, y, board.length);
 				
 				// Checks how many of the surrounding values are bombs
 				var adjCounter = 0;
-				adj.forEach(function(currentAdj, i, a)
+				for (i = 0; i < adj.length; i++)
 				{
-					if (currentAdj == 9)
+					if (adj[i] == 9)
 					{
 						adjCounter++;
 					}
-				});
+				}
 				
 				// Returns the number of bombs in the surrounding 8 squares
-				currentInner = adjCounter;
+				board[x][y] = adjCounter;
 			}
-		});
-	});
-	
+		}
+	}
+	console.log("Populate;\n" + board);
 	return board;
 }
 // function to get a list of the values in the surrounding indeces, helper for populateboard
@@ -209,16 +209,49 @@ function getSurrounding(board, x, y, size)
 // stringify the board for messaging
 function exportBoard(board)
 {
-	var stringBoard = "";
-	board.forEach(function(currentOuter, index, array)
+	var stringBoard = "New Board;\n";
+	for (x = 0; x < board.length; x++)
 	{
-		currentOuter.forEach(function(currentInner, index, array)
+		for (y = 0; y < board[x].length; y++)
 		{
-			stringBoard += "" + minesweeperCode[currentInner];
-		});
+			stringBoard += "" + minesweeperCode[board[x][y]];
+		}
 		stringBoard += "\n";
-	});
+	}
+	console.log("Export;\n" + stringBoard);
+	return [stringBoard];
+}
+
+// stringify the board for messaging (for large boards that go over the character limit)
+function overflowExportBoard(board)
+{
+	var stringBoard = new Array(board.length + 1);
+	stringBoard[0] = "New Oversized board;"
+	for (x = 0; x < board.length; x++)
+	{
+		var lastLine = "";
+		for (y = 0; y < board[x].length; y++)
+		{
+			lastLine += "" + minesweeperCode[board[x][y]] + " ";
+		}
+		stringBoard[x + 1] = lastLine;
+	}
+	console.log("Export;\n" + stringBoard);
 	return stringBoard;
+}
+
+function minesweeper(size, difficulty)
+{
+	var cleanSize = Number(size);
+	var cleanDiff = Number(difficulty);
+	var newBoard = generateBoard(cleanSize);
+	newBoard = seedBoard(newBoard, cleanDiff);
+	newBoard = populateBoard(newBoard);
+	if (cleanSize > 13)
+	{
+		return overflowExportBoard(newBoard);
+	}
+	return exportBoard(newBoard);
 }
 
 
@@ -305,78 +338,56 @@ bot.on('message', function(message)
 				{
 					message.channel.send(AUTH_FAILED);
 				}
-            break;
-			case 'debug':
-				var output = "";
-				output += minesweeperCode[0];
-				output += minesweeperCode[1];
-				output += minesweeperCode[9];
-				output += "\n";
-				output += minesweeperCode[7];
-				message.channel.send(output + "\n ");
-				
-				// Take inputs (not really)
-				var size = 5;
-				var difficulty = 0.15;
-				message.channel.send(size + " " + difficulty);
-				
-				// Create and display the board
-				var newBoard = generateBoard(size);
-				message.channel.send(newBoard);
-				newBoard = seedBoard(newBoard, difficulty);
-				message.channel.send(newBoard);
-				newBoard = populateBoard(newBoard, size);
-				message.channel.send(newBoard);
-				var boardOut = exportBoard(newBoard);
-				message.channel.send(boardOut);
-				
 			break;
 			case 'minesweeper':
 				if (args.length == 0)
 				{
 					// Take inputs (not really)
 					var size = 5;
-					var difficulty = 0.15;
+					var difficulty = 0.10;
 					
 					// Create and display the board
-					var newBoard = generateBoard(size);
-					newBoard = seedBoard(newBoard, difficulty);
-					newBoard = populateBoard(newBoard, size);
-					var boardOut = exportBoard(newBoard);
-					message.channel.send(boardOut);
-				}
-				else if (args.length == 1 && args[0] === "help")
-				{
-					console.log(message.author.username + message.author + ' requested help for ' + cmd + '.');
-					message.channel.send('Syntax for "' + cmd + '"is `?minesweeper <board size> <mine seed percentage>`');
-					message.channel.send('*Board Size can be any integer from 3 to 13, and refers to side length.\n The default board size is 5 if left empty.');
-					message.channel.send('*Mine Seed Percentage can be set to anything, but some recommended values are;\n `easy`: mineDensity = 0.15\n `medium`: mineDensity = 0.25\n `hard`: mineDensity = 0.35\n The default difficulty is easy (0.15) if left empty.');
-					break;
+					var boardOutput = minesweeper(size, difficulty);
+					for (i = 0; i < boardOutput.length; i++)
+					{
+						message.channel.send(boardOutput[i]);
+					}
 				}
 				else if (args.length == 1)
 				{
-					// Check the bounds of the input
-					if (args[0] < 3 || args[0] > 13)
+					if (args[0] === "help")
 					{
-						message.channel.send(ARGS_FAILED);
+						console.log(message.author.username + message.author + ' requested help for ' + cmd + '.');
+						message.channel.send('Syntax for "' + cmd + '"is `?minesweeper <board size> <mine seed percentage>`');
+						message.channel.send('*Board Size can be any integer from 3 to 128, and refers to side length.\n The default board size is 5 if left empty.');
+						message.channel.send('*Mine Seed Percentage can be set to anything between 1 and 0, but some recommended values are;\n `easy`: mineDensity = 0.10\n `medium`: mineDensity = 0.14\n `hard`: mineDensity = 0.17\n `expert`: mineDensity = 0.20\n `insane`: mineDensity = 0.25\n The default difficulty is easy (0.10) if left empty.');
 						break;
 					}
-					
-					// Take inputs (only one here)
-					var size = args[0];
-					var difficulty = 0.15;
-					
-					// Create and display the board
-					var newBoard = generateBoard(size);
-					newBoard = seedBoard(newBoard, difficulty);
-					newBoard = populateBoard(newBoard, size);
-					var boardOut = exportBoard(newBoard);
-					message.channel.send(boardOut);
+					else
+					{
+						// Check the bounds of the input
+						if (args[0] < 3 || args[0] > 128)
+						{
+							message.channel.send(ARGS_FAILED);
+							break;
+						}
+						
+						// Take inputs (only one here)
+						var size = args[0];
+						var difficulty = 0.10;
+						
+						// Create and display the board
+						var boardOutput = minesweeper(size, difficulty);
+						for (i = 0; i < boardOutput.length; i++)
+						{
+							message.channel.send(boardOutput[i]);
+						}
+					}
 				}
 				else if (args.length == 2)
 				{
 					// Check the bounds of the input
-					if (args[0] < 3 || args[0] > 13 || args[1] < 0.0 || args[1] > 1.0)
+					if (args[0] < 3 || args[0] > 128 || args[1] < 0.0 || args[1] > 1.0)
 					{
 						message.channel.send(ARGS_FAILED);
 						break;
@@ -387,11 +398,11 @@ bot.on('message', function(message)
 					var difficulty = args[1];
 					
 					// Create and display the board
-					var newBoard = generateBoard(size);
-					newBoard = seedBoard(newBoard, difficulty);
-					newBoard = populateBoard(newBoard, size);
-					var boardOut = exportBoard(newBoard);
-					message.channel.send(boardOut);
+					var boardOutput = minesweeper(size, difficulty);
+					for (i = 0; i < boardOutput.length; i++)
+					{
+						message.channel.send(boardOutput[i]);
+					}
 				}
 				else
 				{
