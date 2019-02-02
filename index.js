@@ -15,6 +15,12 @@ const TRUSTED = 2;
 const ADMIN = 3;
 // loads the ping limits for each authorization level
 const PING_LIMIT = config.pingLimit;
+// loads the hard character limit to discord messages
+const CHAR_LIMIT = config.charLimit;
+
+// loads minesweeper data
+const minesweeperCode = config.minesweeperValues;
+
 // STUB load channels
 const lounge = bot.channels.find("name", "lounge")
 const testChannel = bot.channels.find("name", "bot-commands")
@@ -74,6 +80,151 @@ function contains(toCheck, waldo)
 	return false;
 }
 
+
+
+
+
+// function to generate a board of the specified size and return italics
+function generateBoard(sideLength)
+{
+	// creates a board of the size
+	var newBoard = new Array(sideLength);
+	newBoard.forEach(function(item, index, array)
+	{
+		newBoard[index] = new Array(sideLength);
+	});
+	
+	// Initializes the values at every index of the board to 0
+	newBoard.forEach(function(currentOuter, index, array)
+	{
+		currentOuter.forEach(function(currentInner, index, array)
+		{
+			currentInner = 0;
+		});
+	});
+	
+	// Returns the newly created board of zeros
+	return newBoard;
+}
+
+// function to seed a board with 8s (bombs)
+function seedBoard(board, seedPercentage)
+{
+	// Iterates through board and sets random values to zero according to the seed percentage
+	board.forEach(function(currentOuter, index1, array1)
+	{
+		currentOuter.forEach(function(currentInner, index2, array2)
+		{
+			if (Math.random() < seedPercentage)
+			{
+				currentInner = 8;
+			}
+		});
+	});
+	
+	return board;
+}
+
+// function to populate a board
+function populateBoard(board, sideLength)
+{
+	board.forEach(function(currentOuter, outerIndex, array1)
+	{
+		currentOuter.forEach(function(currentInner, innerIndex, array2)
+		{
+			// Only count if the current tile is not a bomb
+			if (currentInner != 8)
+			{
+				// Gets a list of the surrounding values
+				var adj = getSurrounding(board, outerIndex, innerIndex, sideLength);
+				
+				// Checks how many of the surrounding values are bombs
+				var adjCounter = 0;
+				adj.forEach(function(currentAdj, i, a)
+				{
+					if (currentAdj == 8)
+					{
+						adjCounter++;
+					}
+				});
+				
+				// Returns the number of bombs in the surrounding 8 squares
+				currentInner = adjCounter;
+			}
+		});
+	});
+	
+	return board;
+}
+// function to get a list of the values in the surrounding indeces, helper for populateboard
+function getSurrounding(board, x, y, size)
+{
+	if (x == 0)
+	{
+		if (y == 0)
+		{
+			return [board[x+1][y], board[x][y+1], board[x+1][y+1]];
+		}
+		else if (y == size - 1)
+		{
+			return [board[x][y-1], board[x+1][y-1], board[x+1][y]];
+		}
+		else
+		{
+			return [board[x][y-1], board[x+1][y-1], board[x+1][y], board[x][y+1], board[x+1][y+1]];
+		}
+	}
+	else if (y == 0)
+	{
+		if (x == size - 1)
+		{
+			return [board[x-1][y], board[x-1][y+1], board[x][y+1]];
+		}
+		else
+		{
+			return [board[x-1][y], board[x+1][y], board[x-1][y+1], board[x][y+1], board[x+1][y+1]];
+		}
+	}
+	else if (x == size - 1)
+	{
+		if (y == size - 1)
+		{
+			return [board[x-1][y-1], board[x][y-1], board[x-1][y]];
+		}
+		else
+		{
+			return [board[x-1][y-1], board[x][y-1], board[x-1][y], board[x-1][y+1], board[x][y+1]];
+		}
+	}
+	else if (y == size - 1)
+	{
+		return [board[x-1][y-1], board[x][y-1], board[x+1][y-1], board[x-1][y], board[x+1][y]];
+	}
+	else
+	{
+		return [board[x-1][y-1], board[x][y-1], board[x+1][y-1], board[x-1][y], board[x+1][y], board[x-1][y+1], board[x][y+1], board[x+1][y+1]];
+	}
+}
+
+// stringify the board for messaging
+function exportBoard(board)
+{
+	var stringBoard = "";
+	newBoard.forEach(function(currentOuter, index, array)
+	{
+		currentOuter.forEach(function(currentInner, index, array)
+		{
+			stringBoard += minesweeperCode[currentInner];
+		});
+		stringBoard += "\n";
+	});
+	return stringBoard;
+}
+
+
+
+
+
 // triggers whenever the bot first initializes
 bot.on("ready", () =>
 {
@@ -86,32 +237,6 @@ bot.on("ready", () =>
 // command listener
 bot.on('message', function(message)
 {
-	// do passive message detection
-	for (i = 0; i < config.bannableOffenses.length; i++)
-	{
-		if (contains(message.content, config.bannableOffenses[i]))
-		{
-			switch (i)
-			{
-				case 0: // dab banning literal
-					console.log(`Deleted offending message from ${message.author.username}`);
-					message.channel.send(config.bannableOffenseMessage[0]);
-					console.log(message.content);
-					message.delete()
-					break;
-				case 1: // dab banning evasion
-					console.log(`Deleted offending message from ${message.author.username}`);
-					message.channel.send(config.bannableOffenseMessage[0]);
-					console.log(message.content);
-					message.delete()
-					break;
-				default:
-					console.log('Attempted "' + message.content + '"');
-					break;
-			}
-			break;
-		}
-	}
 	// the key prefix for thonkBot is `?`
     if (message.content.substring(0, 1) == config.prefix)
 	{
@@ -181,30 +306,74 @@ bot.on('message', function(message)
 					message.channel.send(AUTH_FAILED);
 				}
             break;
-//			case 'pingwall':
-//				if (isAuth(message.author, ADMIN) && args[1] > config.pingLimit[ADMIN])
-//				{
-//					message.channel.send('easy there, ' + message.author);
-//				}
-//				else if (isAuth(message.author, ADMIN))
-//				{
-//					for (i = 0; i < args[1]; i++)
-//					{
-//						message.channel.send(args[0]);
-//						await sleep(500);
-//					}
-//				}
-//				else
-//				{
-//					message.channel.send(AUTH_FAILED);
-//				}
-//				for (i = 0; i < args[1]; i++)
-//				{
-//					message.channel.send(args[0]);
-//				}
-//			break;
-			case 'big':
-				// STUB
+			case 'mine':
+			case 'minesweeper':
+				if (args.length == 0)
+				{
+					// Take inputs (not really)
+					var size = 5;
+					var difficulty = 0.15;
+					
+					// Create and display the board
+					var newBoard = createBoard(size);
+					newBoard = seedBoard(newBoard, difficulty);
+					newBoard = populateBoard(newBoard, size);
+					newBoard = exportBoard(newBoard);
+					message.channel.send(newBoard);
+				}
+				else if (args.length == 1 && args[0] === "help")
+				{
+					console.log(message.author.username + message.author + ' requested help for ' + cmd + '.');
+					message.channel.send('Syntax for "' + cmd + '"is `?minesweeper <board size> <mine seed percentage>`');
+					message.channel.send('*Board Size can be any integer from 3 to 13, and refers to side length.\n The default board size is 5 if left empty.');
+					message.channel.send('*Mine Seed Percentage can be set to anything, but some recommended values are;\n `easy`: mineDensity = 0.15\n `medium`: mineDensity = 0.25\n `hard`: mineDensity = 0.35\n The default difficulty is easy (0.15) if left empty.');
+					break;
+				}
+				else if (args.length == 1)
+				{
+					// Check the bounds of the input
+					if (args[0] < 3 || args[0] > 13)
+					{
+						message.channel.send(ARGS_FAILED);
+						break;
+					}
+					
+					// Take inputs (only one here)
+					var size = args[0];
+					var difficulty = 0.15;
+					
+					// Create and display the board
+					var newBoard = createBoard(size);
+					newBoard = seedBoard(newBoard, difficulty);
+					newBoard = populateBoard(newBoard, size);
+					newBoard = exportBoard(newBoard);
+					message.channel.send(newBoard);
+				}
+				else if (args.length == 2)
+				{
+					// Check the bounds of the input
+					if (args[0] < 3 || args[0] > 13 || args[1] < 0.0 || args[1] > 1.0)
+					{
+						message.channel.send(ARGS_FAILED);
+						break;
+					}
+					
+					// Take inputs
+					var size = args[0];
+					var difficulty = args[1];
+					
+					// Create and display the board
+					var newBoard = createBoard(size);
+					newBoard = seedBoard(newBoard, difficulty);
+					newBoard = populateBoard(newBoard, size);
+					newBoard = exportBoard(newBoard);
+					message.channel.send(newBoard);
+				}
+				else
+				{
+					message.channel.send(ARGS_FAILED);
+					break;
+				}
 			break;
 			default:
 				message.channel.send(NOT_COMMAND);
