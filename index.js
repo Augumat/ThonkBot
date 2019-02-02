@@ -117,7 +117,7 @@ function seedBoard(board, seedPercentage)
 		{
 			if (Math.random() < seedPercentage)
 			{
-				currentInner = 8;
+				currentInner = 9;
 			}
 		});
 	});
@@ -133,7 +133,7 @@ function populateBoard(board, sideLength)
 		currentOuter.forEach(function(currentInner, innerIndex, array2)
 		{
 			// Only count if the current tile is not a bomb
-			if (currentInner != 8)
+			if (currentInner != 9)
 			{
 				// Gets a list of the surrounding values
 				var adj = getSurrounding(board, outerIndex, innerIndex, sideLength);
@@ -142,7 +142,7 @@ function populateBoard(board, sideLength)
 				var adjCounter = 0;
 				adj.forEach(function(currentAdj, i, a)
 				{
-					if (currentAdj == 8)
+					if (currentAdj == 9)
 					{
 						adjCounter++;
 					}
@@ -210,11 +210,11 @@ function getSurrounding(board, x, y, size)
 function exportBoard(board)
 {
 	var stringBoard = "";
-	newBoard.forEach(function(currentOuter, index, array)
+	board.forEach(function(currentOuter, index, array)
 	{
 		currentOuter.forEach(function(currentInner, index, array)
 		{
-			stringBoard += minesweeperCode[currentInner];
+			stringBoard += "" + minesweeperCode[currentInner];
 		});
 		stringBoard += "\n";
 	});
@@ -306,7 +306,31 @@ bot.on('message', function(message)
 					message.channel.send(AUTH_FAILED);
 				}
             break;
-			case 'mine':
+			case 'debug':
+				var output = "";
+				output += minesweeperCode[0];
+				output += minesweeperCode[1];
+				output += minesweeperCode[9];
+				output += "\n";
+				output += minesweeperCode[7];
+				message.channel.send(output + "\n ");
+				
+				// Take inputs (not really)
+				var size = 5;
+				var difficulty = 0.15;
+				message.channel.send(size + " " + difficulty);
+				
+				// Create and display the board
+				var newBoard = generateBoard(size);
+				message.channel.send(newBoard);
+				newBoard = seedBoard(newBoard, difficulty);
+				message.channel.send(newBoard);
+				newBoard = populateBoard(newBoard, size);
+				message.channel.send(newBoard);
+				var boardOut = exportBoard(newBoard);
+				message.channel.send(boardOut);
+				
+			break;
 			case 'minesweeper':
 				if (args.length == 0)
 				{
@@ -315,11 +339,11 @@ bot.on('message', function(message)
 					var difficulty = 0.15;
 					
 					// Create and display the board
-					var newBoard = createBoard(size);
+					var newBoard = generateBoard(size);
 					newBoard = seedBoard(newBoard, difficulty);
 					newBoard = populateBoard(newBoard, size);
-					newBoard = exportBoard(newBoard);
-					message.channel.send(newBoard);
+					var boardOut = exportBoard(newBoard);
+					message.channel.send(boardOut);
 				}
 				else if (args.length == 1 && args[0] === "help")
 				{
@@ -343,11 +367,11 @@ bot.on('message', function(message)
 					var difficulty = 0.15;
 					
 					// Create and display the board
-					var newBoard = createBoard(size);
+					var newBoard = generateBoard(size);
 					newBoard = seedBoard(newBoard, difficulty);
 					newBoard = populateBoard(newBoard, size);
-					newBoard = exportBoard(newBoard);
-					message.channel.send(newBoard);
+					var boardOut = exportBoard(newBoard);
+					message.channel.send(boardOut);
 				}
 				else if (args.length == 2)
 				{
@@ -363,11 +387,11 @@ bot.on('message', function(message)
 					var difficulty = args[1];
 					
 					// Create and display the board
-					var newBoard = createBoard(size);
+					var newBoard = generateBoard(size);
 					newBoard = seedBoard(newBoard, difficulty);
 					newBoard = populateBoard(newBoard, size);
-					newBoard = exportBoard(newBoard);
-					message.channel.send(newBoard);
+					var boardOut = exportBoard(newBoard);
+					message.channel.send(boardOut);
 				}
 				else
 				{
